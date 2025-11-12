@@ -143,6 +143,8 @@ const Index = () => {
             <SwipeCard
               key={currentIndex}
               imageUrl={photos[currentIndex]}
+              imageName={`photo-${currentIndex + 1}.jpg`}
+              imagePath={photos[currentIndex]}
               onSwipe={handleSwipe}
             />
           ) : (

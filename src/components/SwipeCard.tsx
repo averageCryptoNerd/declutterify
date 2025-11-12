@@ -3,10 +3,12 @@ import { X, Heart } from "lucide-react";
 
 interface SwipeCardProps {
   imageUrl: string;
+  imageName?: string;
+  imagePath?: string;
   onSwipe: (direction: "left" | "right") => void;
 }
 
-export const SwipeCard = ({ imageUrl, onSwipe }: SwipeCardProps) => {
+export const SwipeCard = ({ imageUrl, imageName, imagePath, onSwipe }: SwipeCardProps) => {
   const [isDragging, setIsDragging] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [rotation, setRotation] = useState(0);
@@ -34,7 +36,7 @@ export const SwipeCard = ({ imageUrl, onSwipe }: SwipeCardProps) => {
   const handleTouchEnd = () => {
     setIsDragging(false);
     
-    const threshold = window.innerWidth * 0.3;
+    const threshold = 100; // Fixed threshold instead of percentage
     
     if (Math.abs(position.x) > threshold) {
       const direction = position.x > 0 ? "right" : "left";
@@ -61,50 +63,69 @@ export const SwipeCard = ({ imageUrl, onSwipe }: SwipeCardProps) => {
     animateSwipeOut(direction);
   };
 
-  const opacity = Math.abs(position.x) / (window.innerWidth * 0.3);
+  const opacity = Math.abs(position.x) / 100;
   const showKeep = position.x > 50;
   const showDelete = position.x < -50;
 
   return (
-    <div className="relative w-full h-full flex items-center justify-center">
-      <div
-        ref={cardRef}
-        className="absolute w-[90%] max-w-md h-[70vh] transition-transform"
-        style={{
-          transform: `translate(${position.x}px, ${position.y}px) rotate(${rotation}deg)`,
-          transition: isDragging ? "none" : "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-        }}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-      >
-        <div className="relative w-full h-full rounded-3xl overflow-hidden shadow-[var(--shadow-card)] bg-card">
-          <img
-            src={imageUrl}
-            alt="Photo to review"
-            className="w-full h-full object-cover select-none"
-            draggable={false}
-          />
+    <div className="fixed inset-0 flex flex-col">
+      <div className="flex-1 relative">
+        <div
+          ref={cardRef}
+          className="absolute inset-0 transition-transform"
+          style={{
+            transform: `translate(${position.x}px, ${position.y}px) rotate(${rotation}deg)`,
+            transition: isDragging ? "none" : "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+          }}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
+          <div className="relative w-full h-full bg-card">
+            <img
+              src={imageUrl}
+              alt="Photo to review"
+              className="w-full h-full object-cover select-none"
+              draggable={false}
+            />
           
-          {showKeep && (
-            <div 
-              className="absolute top-8 right-8 border-4 border-success rounded-2xl px-6 py-3 rotate-12"
-              style={{ opacity: Math.min(opacity, 1) }}
-            >
-              <span className="text-success text-4xl font-bold">KEEP</span>
-            </div>
-          )}
+            {showKeep && (
+              <div 
+                className="absolute top-8 right-8 border-4 border-success rounded-2xl px-6 py-3 rotate-12"
+                style={{ opacity: Math.min(opacity, 1) }}
+              >
+                <span className="text-success text-4xl font-bold">KEEP</span>
+              </div>
+            )}
           
-          {showDelete && (
-            <div 
-              className="absolute top-8 left-8 border-4 border-destructive rounded-2xl px-6 py-3 -rotate-12"
-              style={{ opacity: Math.min(opacity, 1) }}
-            >
-              <span className="text-destructive text-4xl font-bold">DELETE</span>
-            </div>
-          )}
+            {showDelete && (
+              <div 
+                className="absolute top-8 left-8 border-4 border-destructive rounded-2xl px-6 py-3 -rotate-12"
+                style={{ opacity: Math.min(opacity, 1) }}
+              >
+                <span className="text-destructive text-4xl font-bold">DELETE</span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
+
+      {(imageName || imagePath) && (
+        <div className="absolute bottom-24 left-0 right-0 px-6 z-10 pointer-events-none">
+          <div className="bg-card/90 backdrop-blur-sm rounded-2xl p-4 shadow-lg">
+            {imageName && (
+              <div className="text-card-foreground font-semibold truncate">
+                {imageName}
+              </div>
+            )}
+            {imagePath && (
+              <div className="text-muted-foreground text-sm truncate mt-1">
+                {imagePath}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-6 z-10">
         <button

@@ -20,6 +20,45 @@ const Index = () => {
   const [photosToDelete, setPhotosToDelete] = useState<string[]>([]);
   const [photosPaths, setPhotosPaths] = useState<string[]>([]);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const [isRequestingPermission, setIsRequestingPermission] = useState(false);
+
+  useEffect(() => {
+    checkPermissions();
+  }, []);
+
+  const checkPermissions = async () => {
+    try {
+      const result = await Media.getMedias({
+        quantity: 1,
+        types: "photos"
+      });
+      setHasPermission(true);
+    } catch (error) {
+      console.error('Permission check failed:', error);
+      setHasPermission(false);
+    }
+  };
+
+  const requestPermission = async () => {
+    setIsRequestingPermission(true);
+    try {
+      const result = await Media.getMedias({
+        quantity: 1,
+        types: "photos"
+      });
+      setHasPermission(true);
+      toast.success("Photo access granted!", {
+        icon: <Camera className="w-4 h-4" />,
+      });
+    } catch (error) {
+      console.error('Permission request failed:', error);
+      setHasPermission(false);
+      toast.error("Permission denied. Please enable photo access in your device settings.");
+    } finally {
+      setIsRequestingPermission(false);
+    }
+  };
 
   const loadDevicePhotos = async () => {
     try {
@@ -158,6 +197,81 @@ const Index = () => {
 
   const progress = ((currentIndex + 1) / photos.length) * 100;
   const isComplete = currentIndex >= photos.length;
+
+  // Permission request screen
+  if (hasPermission === false) {
+    return (
+      <PlatformCheck>
+        <div className="min-h-screen flex items-center justify-center p-6" style={{ background: 'var(--gradient-bg)' }}>
+          <div className="max-w-md w-full">
+            <div className="text-center mb-12">
+              <div className="relative w-32 h-32 mx-auto mb-8">
+                <div className="absolute inset-0 bg-primary/20 rounded-[2rem] blur-xl"></div>
+                <div className="relative w-full h-full rounded-[2rem] bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-[var(--shadow-card)]">
+                  <Camera className="w-16 h-16 text-primary-foreground" />
+                </div>
+              </div>
+              <h1 className="text-6xl font-bold text-foreground mb-4 tracking-tight">
+                Declutterify
+              </h1>
+              <p className="text-xl text-muted-foreground max-w-sm mx-auto leading-relaxed mb-8">
+                This app needs access to your photos to help you organize them
+              </p>
+            </div>
+
+            <div className="space-y-6">
+              <div className="bg-card/50 backdrop-blur-sm rounded-2xl p-6 border border-border/50 mb-6">
+                <div className="flex items-start gap-4 mb-4">
+                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <ImagePlus className="w-6 h-6 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-foreground mb-1">Photo Access Required</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      Declutterify needs permission to access your photos so you can swipe through and organize them.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <Button 
+                onClick={requestPermission}
+                size="lg"
+                disabled={isRequestingPermission}
+                className="w-full h-16 text-lg rounded-2xl shadow-lg hover:shadow-xl transition-all font-semibold"
+              >
+                {isRequestingPermission ? (
+                  <>
+                    <Loader2 className="w-6 h-6 mr-3 animate-spin" />
+                    Requesting Permission...
+                  </>
+                ) : (
+                  <>
+                    <Camera className="w-6 h-6 mr-3" />
+                    Grant Photo Access
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </PlatformCheck>
+    );
+  }
+
+  // Loading permission check
+  if (hasPermission === null) {
+    return (
+      <PlatformCheck>
+        <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--gradient-bg)' }}>
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="w-12 h-12 text-primary animate-spin" />
+            <p className="text-muted-foreground">Checking permissions...</p>
+          </div>
+        </div>
+      </PlatformCheck>
+    );
+  }
 
   if (!hasStarted) {
     return (

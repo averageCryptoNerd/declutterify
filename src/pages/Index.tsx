@@ -2,10 +2,11 @@ import { useState, useEffect } from "react";
 import { SwipeCard } from "@/components/SwipeCard";
 import { PlatformCheck } from "@/components/PlatformCheck";
 import { Button } from "@/components/ui/button";
-import { Camera, Trash2, Heart, Sparkles, ImagePlus } from "lucide-react";
+import { Camera, Trash2, Heart, Sparkles, ImagePlus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics';
 import { Media } from '@capacitor-community/media';
+import { Filesystem } from '@capacitor/filesystem';
 
 
 const Index = () => {
@@ -18,6 +19,7 @@ const Index = () => {
   const [loadingProgress, setLoadingProgress] = useState({ current: 0, total: 0 });
   const [photosToDelete, setPhotosToDelete] = useState<string[]>([]);
   const [photosPaths, setPhotosPaths] = useState<string[]>([]);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const loadDevicePhotos = async () => {
     try {
@@ -89,7 +91,7 @@ const Index = () => {
     } else {
       // Track photo for deletion
       const photoPath = photosPaths[currentIndex];
-      if (photoPath && !photoPath.includes('unsplash')) {
+      if (photoPath) {
         setPhotosToDelete(prev => [...prev, photoPath]);
       }
       
@@ -97,7 +99,7 @@ const Index = () => {
       setDeletedCount(prev => prev + 1);
       toast.error("Marked for deletion", {
         icon: <Trash2 className="w-4 h-4" />,
-        description: "Photo will be removed from your device"
+        description: "Photo will be permanently deleted"
       });
     }
 
@@ -108,6 +110,48 @@ const Index = () => {
       toast.success("All photos reviewed!", {
         icon: <Sparkles className="w-4 h-4" />,
       });
+    }
+  };
+
+  const deleteMarkedPhotos = async () => {
+    if (photosToDelete.length === 0) return;
+    
+    setIsDeleting(true);
+    let deletedCount = 0;
+    let failedCount = 0;
+
+    try {
+      for (const photoPath of photosToDelete) {
+        try {
+          await Filesystem.deleteFile({
+            path: photoPath
+          });
+          deletedCount++;
+        } catch (error) {
+          console.error(`Failed to delete ${photoPath}:`, error);
+          failedCount++;
+        }
+      }
+
+      await Haptics.notification({ type: NotificationType.Success });
+      
+      if (failedCount === 0) {
+        toast.success(`Successfully deleted ${deletedCount} photos!`, {
+          icon: <Trash2 className="w-4 h-4" />,
+        });
+      } else {
+        toast.warning(`Deleted ${deletedCount} photos. ${failedCount} failed.`, {
+          icon: <Trash2 className="w-4 h-4" />,
+        });
+      }
+
+      // Clear the deletion list
+      setPhotosToDelete([]);
+    } catch (error) {
+      console.error('Error deleting photos:', error);
+      toast.error("Failed to delete photos. Please try again.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -261,18 +305,36 @@ const Index = () => {
                   </div>
                 </div>
                 {photosToDelete.length > 0 && (
-                  <div className="p-5 bg-accent/10 rounded-2xl mb-6 border border-accent/20">
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center">
-                        <Trash2 className="w-4 h-4 text-accent" />
+                  <div className="p-5 bg-destructive/10 rounded-2xl mb-6 border border-destructive/20">
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className="w-8 h-8 rounded-full bg-destructive/20 flex items-center justify-center">
+                        <Trash2 className="w-4 h-4 text-destructive" />
                       </div>
                       <span className="text-card-foreground font-semibold">
-                        Next Step
+                        Ready to Delete
                       </span>
                     </div>
-                    <p className="text-sm text-muted-foreground text-left leading-relaxed">
-                      To permanently remove the {photosToDelete.length} deleted photos, open your device's Photos app and empty the "Recently Deleted" folder.
+                    <p className="text-sm text-muted-foreground text-left leading-relaxed mb-4">
+                      {photosToDelete.length} photos marked for deletion. This action cannot be undone.
                     </p>
+                    <Button
+                      onClick={deleteMarkedPhotos}
+                      disabled={isDeleting}
+                      variant="destructive"
+                      className="w-full h-12 rounded-xl text-base font-semibold"
+                    >
+                      {isDeleting ? (
+                        <>
+                          <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                          Deleting...
+                        </>
+                      ) : (
+                        <>
+                          <Trash2 className="w-5 h-5 mr-2" />
+                          Delete {photosToDelete.length} Photos Permanently
+                        </>
+                      )}
+                    </Button>
                   </div>
                 )}
                 <div className="space-y-3">

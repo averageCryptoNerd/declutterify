@@ -15,25 +15,34 @@ After running `npx cap sync`, copy the icon to these directories in your `androi
 
 You can use an online tool like [Android Asset Studio](https://romannurik.github.io/AndroidAssetStudio/icons-launcher.html) to generate all sizes from the base icon.
 
-## Permissions
+## Permissions & Requirements
 
-The app now uses `@capacitor-community/media` for full photo gallery access. Add these permissions to `android/app/src/main/AndroidManifest.xml`:
+**Minimum Android Version:** Android 13 (API Level 33)
+
+Add these permissions to `android/app/src/main/AndroidManifest.xml`:
 
 ```xml
-<!-- For Android 13+ (API 33+) -->
+<!-- Read and delete photos (Android 13+) -->
 <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
-
-<!-- For Android 12 and below -->
-<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
-    android:maxSdkVersion="32"/>
+<uses-permission android:name="android.permission.ACCESS_MEDIA_LOCATION"/>
 ```
 
-**Important:** After adding permissions, run:
+**Set minimum SDK version** in `android/app/build.gradle`:
+```gradle
+android {
+    defaultConfig {
+        minSdkVersion 33  // Android 13+
+        targetSdkVersion 34  // Android 14
+    }
+}
+```
+
+**Important:** After making these changes, run:
 ```bash
 npx cap sync android
 ```
 
-The app will now request permission to access ALL photos on first launch, instead of using the photo picker.
+The app will request permission to access and delete photos on first launch. Photos are permanently deleted when you tap the "Delete Permanently" button on the completion screen.
 
 ## Before Publishing
 

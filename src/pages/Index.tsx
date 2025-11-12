@@ -4,9 +4,8 @@ import { PlatformCheck } from "@/components/PlatformCheck";
 import { Button } from "@/components/ui/button";
 import { Camera, Trash2, Heart, Sparkles, ImagePlus } from "lucide-react";
 import { toast } from "sonner";
-import { Camera as CapCamera } from '@capacitor/camera';
-import { CameraResultType, CameraSource } from '@capacitor/camera';
-import { Media } from '@capacitor-community/media';
+import { Camera as CapCamera, CameraResultType, CameraSource } from '@capacitor/camera';
+import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics';
 
 const DEMO_PHOTOS = [
   "https://images.unsplash.com/photo-1506905925346-21bda4d32df4",
@@ -31,39 +30,28 @@ const Index = () => {
     try {
       setIsLoadingPhotos(true);
       
-      // Request permission and get all photos from gallery
-      const result = await Media.getAlbums();
+      // Use pickImages which works reliably on Android
+      const result = await CapCamera.pickImages({
+        quality: 90,
+        limit: 0, // 0 means no limit - user can select all
+      });
       
-      // Get photos from all albums
-      const allPhotos: string[] = [];
-      
-      for (const album of result.albums) {
-        const mediaResult = await Media.getMedias({
-          albumIdentifier: album.identifier,
-        });
-        
-        // Add web paths of all photos
-        if (mediaResult.medias) {
-          mediaResult.medias.forEach(media => {
-            if (media.data) {
-              allPhotos.push(`data:image/jpeg;base64,${media.data}`);
-            }
-          });
-        }
-      }
-      
-      if (allPhotos.length > 0) {
-        setPhotos(allPhotos);
+      if (result.photos && result.photos.length > 0) {
+        const photoUrls = result.photos.map(photo => photo.webPath || '');
+        setPhotos(photoUrls.filter(url => url !== ''));
         setCurrentIndex(0);
         setSavedCount(0);
         setDeletedCount(0);
         setHasStarted(true);
         
-        toast.success(`Loaded ${allPhotos.length} photos from your gallery!`, {
+        // Haptic feedback on success
+        await Haptics.impact({ style: ImpactStyle.Medium });
+        
+        toast.success(`Loaded ${result.photos.length} photos from your gallery!`, {
           icon: <ImagePlus className="w-4 h-4" />,
         });
       } else {
-        toast.error("No photos found in your gallery");
+        toast.error("No photos selected");
       }
     } catch (error) {
       console.error('Error loading photos:', error);
@@ -73,13 +61,16 @@ const Index = () => {
     }
   };
 
-  const handleSwipe = (direction: "left" | "right") => {
+  const handleSwipe = async (direction: "left" | "right") => {
+    // Haptic feedback based on direction
     if (direction === "right") {
+      await Haptics.impact({ style: ImpactStyle.Light });
       setSavedCount(prev => prev + 1);
       toast.success("Photo saved!", {
         icon: <Heart className="w-4 h-4" />,
       });
     } else {
+      await Haptics.impact({ style: ImpactStyle.Heavy });
       setDeletedCount(prev => prev + 1);
       toast.error("Photo deleted", {
         icon: <Trash2 className="w-4 h-4" />,
@@ -89,6 +80,7 @@ const Index = () => {
     if (currentIndex < photos.length - 1) {
       setCurrentIndex(prev => prev + 1);
     } else {
+      await Haptics.notification({ type: NotificationType.Success });
       toast.success("All photos reviewed!", {
         icon: <Sparkles className="w-4 h-4" />,
       });

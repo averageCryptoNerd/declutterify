@@ -4,8 +4,8 @@ import { PlatformCheck } from "@/components/PlatformCheck";
 import { Button } from "@/components/ui/button";
 import { Camera, Trash2, Heart, Sparkles, ImagePlus } from "lucide-react";
 import { toast } from "sonner";
-import { Camera as CapCamera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics';
+import { Media } from '@capacitor-community/media';
 
 
 const Index = () => {
@@ -24,26 +24,40 @@ const Index = () => {
       setIsLoadingPhotos(true);
       setLoadingProgress({ current: 0, total: 0 });
       
-      // Use pickImages - user can select multiple/all photos
-      const result = await CapCamera.pickImages({
-        quality: 90,
-        limit: 0, // No limit
+      // Request permission to access all photos
+      const hasPermission = await Media.requestPermissions();
+      
+      if (!hasPermission.photos) {
+        toast.error("Photo access denied. Please grant permission in settings.");
+        setIsLoadingPhotos(false);
+        return;
+      }
+      
+      // Get all photos from the device
+      const result = await Media.getMedias({
+        quantity: 0, // Get all photos
+        types: "photos",
+        sort: {
+          key: "creationDate",
+          ascending: false
+        }
       });
       
-      if (result.photos && result.photos.length > 0) {
-        const totalPhotos = result.photos.length;
+      if (result.medias && result.medias.length > 0) {
+        const totalPhotos = result.medias.length;
         setLoadingProgress({ current: 0, total: totalPhotos });
         
         const photoUrls: string[] = [];
         const photoPaths: string[] = [];
         
         // Process photos with progress updates
-        for (let i = 0; i < result.photos.length; i++) {
-          const photo = result.photos[i];
-          if (photo.webPath) {
-            photoUrls.push(photo.webPath);
-            // Store the actual file path for deletion
-            photoPaths.push(photo.path || photo.webPath);
+        for (let i = 0; i < result.medias.length; i++) {
+          const media = result.medias[i];
+          if (media.path) {
+            // Convert file path to web path for display
+            const webPath = `file://${media.path}`;
+            photoUrls.push(webPath);
+            photoPaths.push(media.path);
           }
           setLoadingProgress({ current: i + 1, total: totalPhotos });
           
@@ -67,7 +81,7 @@ const Index = () => {
           icon: <ImagePlus className="w-4 h-4" />,
         });
       } else {
-        toast.error("No photos selected");
+        toast.error("No photos found on device");
       }
     } catch (error) {
       console.error('Error loading photos:', error);

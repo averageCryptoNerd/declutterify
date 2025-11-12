@@ -26,6 +26,8 @@ const Index = () => {
   const [hasStarted, setHasStarted] = useState(false);
   const [isLoadingPhotos, setIsLoadingPhotos] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState({ current: 0, total: 0 });
+  const [photosToDelete, setPhotosToDelete] = useState<string[]>([]);
+  const [photosPaths, setPhotosPaths] = useState<string[]>([]);
 
   const loadDevicePhotos = async () => {
     try {
@@ -43,12 +45,15 @@ const Index = () => {
         setLoadingProgress({ current: 0, total: totalPhotos });
         
         const photoUrls: string[] = [];
+        const photoPaths: string[] = [];
         
         // Process photos with progress updates
         for (let i = 0; i < result.photos.length; i++) {
           const photo = result.photos[i];
           if (photo.webPath) {
             photoUrls.push(photo.webPath);
+            // Store the actual file path for deletion
+            photoPaths.push(photo.path || photo.webPath);
           }
           setLoadingProgress({ current: i + 1, total: totalPhotos });
           
@@ -59,9 +64,11 @@ const Index = () => {
         }
         
         setPhotos(photoUrls);
+        setPhotosPaths(photoPaths);
         setCurrentIndex(0);
         setSavedCount(0);
         setDeletedCount(0);
+        setPhotosToDelete([]);
         setHasStarted(true);
         
         await Haptics.impact({ style: ImpactStyle.Medium });
@@ -90,10 +97,17 @@ const Index = () => {
         icon: <Heart className="w-4 h-4" />,
       });
     } else {
+      // Track photo for deletion
+      const photoPath = photosPaths[currentIndex];
+      if (photoPath && !photoPath.includes('unsplash')) {
+        setPhotosToDelete(prev => [...prev, photoPath]);
+      }
+      
       await Haptics.impact({ style: ImpactStyle.Heavy });
       setDeletedCount(prev => prev + 1);
-      toast.error("Photo deleted", {
+      toast.error("Marked for deletion", {
         icon: <Trash2 className="w-4 h-4" />,
+        description: "Photo will be removed from your device"
       });
     }
 
@@ -235,6 +249,22 @@ const Index = () => {
                     <span className="text-destructive text-2xl font-bold">{deletedCount}</span>
                   </div>
                 </div>
+                {photosToDelete.length > 0 && (
+                  <div className="p-4 bg-destructive/10 rounded-2xl mb-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Trash2 className="w-5 h-5 text-destructive" />
+                      <span className="text-card-foreground font-semibold">
+                        {photosToDelete.length} photos ready to delete
+                      </span>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      To permanently delete these photos from your device, go to your phone's Photos app and delete them from the "Recently Deleted" folder.
+                    </p>
+                    <div className="text-xs text-muted-foreground">
+                      Note: Due to Android security restrictions, apps cannot automatically delete photos. You'll need to manually confirm deletion in your gallery app.
+                    </div>
+                  </div>
+                )}
                 <Button
                   onClick={() => {
                     setCurrentIndex(0);
@@ -249,9 +279,11 @@ const Index = () => {
                   onClick={() => {
                     setHasStarted(false);
                     setPhotos(DEMO_PHOTOS);
+                    setPhotosPaths([]);
                     setCurrentIndex(0);
                     setSavedCount(0);
                     setDeletedCount(0);
+                    setPhotosToDelete([]);
                   }}
                   variant="outline"
                   className="w-full h-12 rounded-full"

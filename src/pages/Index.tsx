@@ -232,14 +232,14 @@ const Index = () => {
       <PlatformCheck>
         <div className="min-h-screen flex items-center justify-center p-6" style={{ background: 'var(--gradient-bg)' }}>
           <div className="max-w-md w-full">
-            <div className="text-center mb-12">
+            <div className="text-center mb-12 animate-in fade-in duration-700">
               <div className="relative w-32 h-32 mx-auto mb-8">
-                <div className="absolute inset-0 bg-primary/20 rounded-[2rem] blur-xl"></div>
-                <div className="relative w-full h-full rounded-[2rem] bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-[var(--shadow-card)]">
-                  <Camera className="w-16 h-16 text-primary-foreground" />
+                <div className="absolute inset-0 bg-primary/20 rounded-[2rem] blur-2xl animate-pulse"></div>
+                <div className="relative w-full h-full rounded-[2rem] bg-gradient-to-br from-primary via-accent to-primary flex items-center justify-center shadow-[var(--shadow-card)] backdrop-blur-sm border border-primary/20">
+                  <Camera className="w-16 h-16 text-primary-foreground drop-shadow-lg" />
                 </div>
               </div>
-              <h1 className="text-6xl font-bold text-foreground mb-4 tracking-tight">
+              <h1 className="text-6xl font-bold text-foreground mb-4 tracking-tight bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
                 Declutterify
               </h1>
               <p className="text-xl text-muted-foreground max-w-sm mx-auto leading-relaxed mb-8">
@@ -247,16 +247,16 @@ const Index = () => {
               </p>
             </div>
 
-            <div className="space-y-6">
-              <div className="bg-card/50 backdrop-blur-sm rounded-2xl p-6 border border-border/50 mb-6">
-                <div className="flex items-start gap-4 mb-4">
-                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <div className="space-y-6 animate-in slide-in-from-bottom duration-500">
+              <div className="bg-card/60 backdrop-blur-sm rounded-2xl p-6 border border-border/50 shadow-lg">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center flex-shrink-0 shadow-sm">
                     <ImagePlus className="w-6 h-6 text-primary" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-foreground mb-1">Photo Access Required</h3>
+                    <h3 className="font-semibold text-foreground mb-2">Photo Access Required</h3>
                     <p className="text-sm text-muted-foreground leading-relaxed">
-                      Declutterify needs permission to access your photos so you can swipe through and organize them.
+                      Declutterify needs permission to access your photos so you can swipe through and organize them efficiently.
                     </p>
                   </div>
                 </div>
@@ -266,7 +266,7 @@ const Index = () => {
                 onClick={requestPermission}
                 size="lg"
                 disabled={isRequestingPermission}
-                className="w-full h-16 text-lg rounded-2xl shadow-lg hover:shadow-xl transition-all font-semibold"
+                className="w-full h-16 text-lg rounded-2xl shadow-lg hover:shadow-2xl transition-all font-semibold bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90"
               >
                 {isRequestingPermission ? (
                   <>
@@ -306,14 +306,14 @@ const Index = () => {
       <PlatformCheck>
         <div className="min-h-screen flex items-center justify-center p-6" style={{ background: 'var(--gradient-bg)' }}>
           <div className="max-w-md w-full">
-            <div className="text-center mb-12">
+            <div className="text-center mb-12 animate-in fade-in duration-700">
               <div className="relative w-32 h-32 mx-auto mb-8">
-                <div className="absolute inset-0 bg-primary/20 rounded-[2rem] blur-xl"></div>
-                <div className="relative w-full h-full rounded-[2rem] bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-[var(--shadow-card)]">
-                  <Camera className="w-16 h-16 text-primary-foreground" />
+                <div className="absolute inset-0 bg-primary/20 rounded-[2rem] blur-2xl animate-pulse"></div>
+                <div className="relative w-full h-full rounded-[2rem] bg-gradient-to-br from-primary via-accent to-primary flex items-center justify-center shadow-[var(--shadow-card)] backdrop-blur-sm border border-primary/20">
+                  <Camera className="w-16 h-16 text-primary-foreground drop-shadow-lg" />
                 </div>
               </div>
-              <h1 className="text-6xl font-bold text-foreground mb-4 tracking-tight">
+              <h1 className="text-6xl font-bold text-foreground mb-4 tracking-tight bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
                 Declutterify
               </h1>
               <p className="text-xl text-muted-foreground max-w-sm mx-auto leading-relaxed">
@@ -340,20 +340,20 @@ const Index = () => {
                 </p>
               </div>
             ) : (
-              <div className="space-y-6">
+              <div className="space-y-6 animate-in slide-in-from-bottom duration-500">
                 <Button 
                   onClick={loadDevicePhotos}
                   size="lg"
                   disabled={isLoadingPhotos}
-                  className="w-full h-16 text-lg rounded-2xl shadow-lg hover:shadow-xl transition-all font-semibold"
+                  className="w-full h-16 text-lg rounded-2xl shadow-lg hover:shadow-2xl transition-all font-semibold bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90"
                 >
                   <ImagePlus className="w-6 h-6 mr-3" />
-                  Select Photos to Organize
+                  Load Photos to Organize
                 </Button>
                 
-                <div className="bg-card/50 backdrop-blur-sm rounded-2xl p-6 border border-border/50">
+                <div className="bg-card/60 backdrop-blur-sm rounded-2xl p-6 border border-border/50 shadow-lg">
                   <p className="text-sm text-muted-foreground text-center leading-relaxed">
-                    <span className="font-semibold text-foreground">Tip:</span> You can select as many photos as you want. Swipe right to keep, left to mark for deletion.
+                    <span className="font-semibold text-foreground">💡 Tip:</span> Swipe right to keep, left to mark for deletion. All changes are safe until you tap "Delete Permanently".
                   </p>
                 </div>
               </div>

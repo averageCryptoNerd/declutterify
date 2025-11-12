@@ -140,7 +140,13 @@ const Index = () => {
       }
     } catch (error) {
       console.error('Error loading photos:', error);
-      toast.error("Could not access photos. Please check permissions in your device settings.");
+      console.error('Error details:', JSON.stringify(error, null, 2));
+      
+      // Show more specific error message
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      toast.error(`Could not access photos: ${errorMessage}`, {
+        description: "Please check permissions in your device settings."
+      });
     } finally {
       setIsLoadingPhotos(false);
       setLoadingProgress({ current: 0, total: 0 });

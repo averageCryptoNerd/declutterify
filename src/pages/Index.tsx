@@ -24,23 +24,10 @@ const Index = () => {
       setIsLoadingPhotos(true);
       setLoadingProgress({ current: 0, total: 0 });
       
-      // Request permission to access all photos
-      const hasPermission = await Media.requestPermissions();
-      
-      if (!hasPermission.photos) {
-        toast.error("Photo access denied. Please grant permission in settings.");
-        setIsLoadingPhotos(false);
-        return;
-      }
-      
       // Get all photos from the device
       const result = await Media.getMedias({
         quantity: 0, // Get all photos
-        types: "photos",
-        sort: {
-          key: "creationDate",
-          ascending: false
-        }
+        types: "photos"
       });
       
       if (result.medias && result.medias.length > 0) {
@@ -53,11 +40,10 @@ const Index = () => {
         // Process photos with progress updates
         for (let i = 0; i < result.medias.length; i++) {
           const media = result.medias[i];
-          if (media.path) {
-            // Convert file path to web path for display
-            const webPath = `file://${media.path}`;
-            photoUrls.push(webPath);
-            photoPaths.push(media.path);
+          if (media.identifier) {
+            // Use the media identifier/uri
+            photoUrls.push(media.identifier);
+            photoPaths.push(media.identifier);
           }
           setLoadingProgress({ current: i + 1, total: totalPhotos });
           
@@ -85,7 +71,7 @@ const Index = () => {
       }
     } catch (error) {
       console.error('Error loading photos:', error);
-      toast.error("Could not access photos. Please check permissions.");
+      toast.error("Could not access photos. Please check permissions in your device settings.");
     } finally {
       setIsLoadingPhotos(false);
       setLoadingProgress({ current: 0, total: 0 });

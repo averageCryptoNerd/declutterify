@@ -17,11 +17,23 @@ You can use an online tool like [Android Asset Studio](https://romannurik.github
 
 ## Permissions
 
-The app requires these permissions (already configured in Capacitor):
-- **READ_MEDIA_IMAGES** - To load photos from device
-- **CAMERA** - For photo picker access
+The app now uses `@capacitor-community/media` for full photo gallery access. Add these permissions to `android/app/src/main/AndroidManifest.xml`:
 
-These are automatically handled by the Capacitor Camera plugin.
+```xml
+<!-- For Android 13+ (API 33+) -->
+<uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
+
+<!-- For Android 12 and below -->
+<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+    android:maxSdkVersion="32"/>
+```
+
+**Important:** After adding permissions, run:
+```bash
+npx cap sync android
+```
+
+The app will now request permission to access ALL photos on first launch, instead of using the photo picker.
 
 ## Before Publishing
 

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SwipeCard } from "@/components/SwipeCard";
 import { PlatformCheck } from "@/components/PlatformCheck";
 import { Button } from "@/components/ui/button";
@@ -25,29 +25,48 @@ const Index = () => {
   const [deletedCount, setDeletedCount] = useState(0);
   const [hasStarted, setHasStarted] = useState(false);
   const [isLoadingPhotos, setIsLoadingPhotos] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState({ current: 0, total: 0 });
 
   const loadDevicePhotos = async () => {
     try {
       setIsLoadingPhotos(true);
+      setLoadingProgress({ current: 0, total: 0 });
       
-      // Use pickImages which works reliably on Android
+      // Use pickImages - user can select multiple/all photos
       const result = await CapCamera.pickImages({
         quality: 90,
-        limit: 0, // 0 means no limit - user can select all
+        limit: 0, // No limit
       });
       
       if (result.photos && result.photos.length > 0) {
-        const photoUrls = result.photos.map(photo => photo.webPath || '');
-        setPhotos(photoUrls.filter(url => url !== ''));
+        const totalPhotos = result.photos.length;
+        setLoadingProgress({ current: 0, total: totalPhotos });
+        
+        const photoUrls: string[] = [];
+        
+        // Process photos with progress updates
+        for (let i = 0; i < result.photos.length; i++) {
+          const photo = result.photos[i];
+          if (photo.webPath) {
+            photoUrls.push(photo.webPath);
+          }
+          setLoadingProgress({ current: i + 1, total: totalPhotos });
+          
+          // Small delay to show progress for UX
+          if (i % 10 === 0) {
+            await new Promise(resolve => setTimeout(resolve, 50));
+          }
+        }
+        
+        setPhotos(photoUrls);
         setCurrentIndex(0);
         setSavedCount(0);
         setDeletedCount(0);
         setHasStarted(true);
         
-        // Haptic feedback on success
         await Haptics.impact({ style: ImpactStyle.Medium });
         
-        toast.success(`Loaded ${result.photos.length} photos from your gallery!`, {
+        toast.success(`Loaded ${photoUrls.length} photos!`, {
           icon: <ImagePlus className="w-4 h-4" />,
         });
       } else {
@@ -55,9 +74,10 @@ const Index = () => {
       }
     } catch (error) {
       console.error('Error loading photos:', error);
-      toast.error("Could not access photos. Please allow photo permissions in Settings.");
+      toast.error("Could not access photos. Please check permissions.");
     } finally {
       setIsLoadingPhotos(false);
+      setLoadingProgress({ current: 0, total: 0 });
     }
   };
 
@@ -106,36 +126,27 @@ const Index = () => {
               <h1 className="text-5xl font-bold text-foreground mb-4">
                 Declutterify
               </h1>
-              <p className="text-xl text-muted-foreground mb-8">
-                Swipe through your photos and decide what to keep or delete
+              <p className="text-lg text-muted-foreground">
+                Swipe to organize your photos
               </p>
             </div>
 
-            <div className="bg-card rounded-3xl p-8 shadow-[var(--shadow-card)] mb-8">
-              <h2 className="text-2xl font-semibold text-card-foreground mb-6">
-                How it works
-              </h2>
-              <div className="space-y-4 text-left">
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-full bg-success/10 flex items-center justify-center flex-shrink-0">
-                    <Heart className="w-6 h-6 text-success" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-card-foreground">Swipe Right</h3>
-                    <p className="text-muted-foreground">Keep photos you love</p>
-                  </div>
+            {isLoadingPhotos && loadingProgress.total > 0 && (
+              <div className="mb-6 bg-card rounded-2xl p-6 shadow-[var(--shadow-card)]">
+                <p className="text-card-foreground font-semibold mb-3">
+                  Loading photos...
+                </p>
+                <div className="w-full h-3 bg-secondary rounded-full overflow-hidden mb-2">
+                  <div 
+                    className="h-full bg-primary transition-all duration-300"
+                    style={{ width: `${(loadingProgress.current / loadingProgress.total) * 100}%` }}
+                  />
                 </div>
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center flex-shrink-0">
-                    <Trash2 className="w-6 h-6 text-destructive" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-card-foreground">Swipe Left</h3>
-                    <p className="text-muted-foreground">Delete unwanted photos</p>
-                  </div>
-                </div>
+                <p className="text-sm text-muted-foreground">
+                  {loadingProgress.current} / {loadingProgress.total} photos
+                </p>
               </div>
-            </div>
+            )}
 
             <div className="flex flex-col gap-3">
               <Button 
@@ -145,16 +156,16 @@ const Index = () => {
                 className="w-full h-14 text-lg rounded-full shadow-lg hover:shadow-xl transition-all"
               >
                 <ImagePlus className="w-5 h-5 mr-2" />
-                {isLoadingPhotos ? "Loading Photos..." : "Load My Photos"}
+                {isLoadingPhotos ? "Loading..." : "Load Photos"}
               </Button>
               
               <Button 
                 onClick={handleStart}
                 size="lg"
                 variant="outline"
-                className="w-full h-14 text-lg rounded-full shadow-lg hover:shadow-xl transition-all"
+                className="w-full h-14 text-lg rounded-full"
               >
-                Use Demo Photos
+                Try Demo
               </Button>
             </div>
           </div>

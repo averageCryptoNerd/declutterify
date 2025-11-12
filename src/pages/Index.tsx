@@ -29,11 +29,23 @@ const Index = () => {
 
   const checkPermissions = async () => {
     try {
-      const result = await Media.getMedias({
-        quantity: 1,
-        types: "photos"
-      });
-      setHasPermission(true);
+      const permissions = (window as any).cordova?.plugins?.permissions;
+      if (permissions) {
+        const permission = permissions.READ_MEDIA_IMAGES || 'android.permission.READ_MEDIA_IMAGES';
+        
+        permissions.checkPermission(permission, (status: any) => {
+          if (status.hasPermission) {
+            setHasPermission(true);
+          } else {
+            setHasPermission(false);
+          }
+        }, () => {
+          setHasPermission(false);
+        });
+      } else {
+        // Fallback for web/non-Android
+        setHasPermission(true);
+      }
     } catch (error) {
       console.error('Permission check failed:', error);
       setHasPermission(false);
@@ -43,19 +55,35 @@ const Index = () => {
   const requestPermission = async () => {
     setIsRequestingPermission(true);
     try {
-      const result = await Media.getMedias({
-        quantity: 1,
-        types: "photos"
-      });
-      setHasPermission(true);
-      toast.success("Photo access granted!", {
-        icon: <Camera className="w-4 h-4" />,
-      });
+      const permissions = (window as any).cordova?.plugins?.permissions;
+      if (permissions) {
+        const permission = permissions.READ_MEDIA_IMAGES || 'android.permission.READ_MEDIA_IMAGES';
+        
+        permissions.requestPermission(permission, (status: any) => {
+          if (status.hasPermission) {
+            setHasPermission(true);
+            toast.success("Photo access granted!", {
+              icon: <Camera className="w-4 h-4" />,
+            });
+          } else {
+            setHasPermission(false);
+            toast.error("Permission denied. Please enable photo access in your device settings.");
+          }
+          setIsRequestingPermission(false);
+        }, () => {
+          setHasPermission(false);
+          toast.error("Permission request failed. Please try again.");
+          setIsRequestingPermission(false);
+        });
+      } else {
+        // Fallback for web/non-Android
+        setHasPermission(true);
+        setIsRequestingPermission(false);
+      }
     } catch (error) {
       console.error('Permission request failed:', error);
       setHasPermission(false);
-      toast.error("Permission denied. Please enable photo access in your device settings.");
-    } finally {
+      toast.error("Permission request failed. Please try again.");
       setIsRequestingPermission(false);
     }
   };

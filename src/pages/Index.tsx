@@ -31,16 +31,28 @@ const Index = () => {
     try {
       const permissions = (window as any).cordova?.plugins?.permissions;
       if (permissions) {
-        const permission = permissions.READ_MEDIA_IMAGES || 'android.permission.READ_MEDIA_IMAGES';
+        // Check for Android 13+ first
+        const modernPermission = permissions.READ_MEDIA_IMAGES || 'android.permission.READ_MEDIA_IMAGES';
+        const legacyPermission = permissions.READ_EXTERNAL_STORAGE || 'android.permission.READ_EXTERNAL_STORAGE';
         
-        permissions.checkPermission(permission, (status: any) => {
+        permissions.checkPermission(modernPermission, (status: any) => {
           if (status.hasPermission) {
             setHasPermission(true);
           } else {
-            setHasPermission(false);
+            // Fallback to legacy permission for Android 12 and below
+            permissions.checkPermission(legacyPermission, (status: any) => {
+              setHasPermission(status.hasPermission);
+            }, () => {
+              setHasPermission(false);
+            });
           }
         }, () => {
-          setHasPermission(false);
+          // If modern permission check fails, try legacy
+          permissions.checkPermission(legacyPermission, (status: any) => {
+            setHasPermission(status.hasPermission);
+          }, () => {
+            setHasPermission(false);
+          });
         });
       } else {
         // Fallback for web/non-Android
@@ -57,23 +69,54 @@ const Index = () => {
     try {
       const permissions = (window as any).cordova?.plugins?.permissions;
       if (permissions) {
-        const permission = permissions.READ_MEDIA_IMAGES || 'android.permission.READ_MEDIA_IMAGES';
+        // Try modern permission first (Android 13+)
+        const modernPermission = permissions.READ_MEDIA_IMAGES || 'android.permission.READ_MEDIA_IMAGES';
+        const legacyPermission = permissions.READ_EXTERNAL_STORAGE || 'android.permission.READ_EXTERNAL_STORAGE';
         
-        permissions.requestPermission(permission, (status: any) => {
+        permissions.requestPermission(modernPermission, (status: any) => {
           if (status.hasPermission) {
             setHasPermission(true);
             toast.success("Photo access granted!", {
               icon: <Camera className="w-4 h-4" />,
             });
+            setIsRequestingPermission(false);
           } else {
-            setHasPermission(false);
-            toast.error("Permission denied. Please enable photo access in your device settings.");
+            // If modern permission fails, try legacy (Android 12 and below)
+            permissions.requestPermission(legacyPermission, (legacyStatus: any) => {
+              if (legacyStatus.hasPermission) {
+                setHasPermission(true);
+                toast.success("Photo access granted!", {
+                  icon: <Camera className="w-4 h-4" />,
+                });
+              } else {
+                setHasPermission(false);
+                toast.error("Permission denied. Please enable photo access in your device settings.");
+              }
+              setIsRequestingPermission(false);
+            }, () => {
+              setHasPermission(false);
+              toast.error("Permission request failed. Please try again.");
+              setIsRequestingPermission(false);
+            });
           }
-          setIsRequestingPermission(false);
         }, () => {
-          setHasPermission(false);
-          toast.error("Permission request failed. Please try again.");
-          setIsRequestingPermission(false);
+          // If modern permission request fails, try legacy
+          permissions.requestPermission(legacyPermission, (legacyStatus: any) => {
+            if (legacyStatus.hasPermission) {
+              setHasPermission(true);
+              toast.success("Photo access granted!", {
+                icon: <Camera className="w-4 h-4" />,
+              });
+            } else {
+              setHasPermission(false);
+              toast.error("Permission request failed. Please try again.");
+            }
+            setIsRequestingPermission(false);
+          }, () => {
+            setHasPermission(false);
+            toast.error("Permission request failed. Please try again.");
+            setIsRequestingPermission(false);
+          });
         });
       } else {
         // Fallback for web/non-Android

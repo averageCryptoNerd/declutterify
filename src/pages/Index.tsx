@@ -6,6 +6,7 @@ import { Camera, Trash2, Heart, Sparkles, ImagePlus } from "lucide-react";
 import { toast } from "sonner";
 import { Camera as CapCamera } from '@capacitor/camera';
 import { CameraResultType, CameraSource } from '@capacitor/camera';
+import { Media } from '@capacitor-community/media';
 
 const DEMO_PHOTOS = [
   "https://images.unsplash.com/photo-1506905925346-21bda4d32df4",
@@ -30,27 +31,43 @@ const Index = () => {
     try {
       setIsLoadingPhotos(true);
       
-      // Request multiple photos from gallery
-      const images = await CapCamera.pickImages({
-        quality: 90,
-        limit: 50, // Allow selecting up to 50 photos
-      });
+      // Request permission and get all photos from gallery
+      const result = await Media.getAlbums();
       
-      if (images.photos && images.photos.length > 0) {
-        const photoUrls = images.photos.map(photo => photo.webPath || '');
-        setPhotos(photoUrls.filter(url => url !== ''));
+      // Get photos from all albums
+      const allPhotos: string[] = [];
+      
+      for (const album of result.albums) {
+        const mediaResult = await Media.getMedias({
+          albumIdentifier: album.identifier,
+        });
+        
+        // Add web paths of all photos
+        if (mediaResult.medias) {
+          mediaResult.medias.forEach(media => {
+            if (media.data) {
+              allPhotos.push(`data:image/jpeg;base64,${media.data}`);
+            }
+          });
+        }
+      }
+      
+      if (allPhotos.length > 0) {
+        setPhotos(allPhotos);
         setCurrentIndex(0);
         setSavedCount(0);
         setDeletedCount(0);
         setHasStarted(true);
         
-        toast.success(`Loaded ${images.photos.length} photos from your device!`, {
+        toast.success(`Loaded ${allPhotos.length} photos from your gallery!`, {
           icon: <ImagePlus className="w-4 h-4" />,
         });
+      } else {
+        toast.error("No photos found in your gallery");
       }
     } catch (error) {
       console.error('Error loading photos:', error);
-      toast.error("Could not access photos. Please allow photo permissions.");
+      toast.error("Could not access photos. Please allow photo permissions in Settings.");
     } finally {
       setIsLoadingPhotos(false);
     }

@@ -2,8 +2,10 @@ import { useState } from "react";
 import { SwipeCard } from "@/components/SwipeCard";
 import { PlatformCheck } from "@/components/PlatformCheck";
 import { Button } from "@/components/ui/button";
-import { Camera, Trash2, Heart, Sparkles } from "lucide-react";
+import { Camera, Trash2, Heart, Sparkles, ImagePlus } from "lucide-react";
 import { toast } from "sonner";
+import { Camera as CapCamera } from '@capacitor/camera';
+import { CameraResultType, CameraSource } from '@capacitor/camera';
 
 const DEMO_PHOTOS = [
   "https://images.unsplash.com/photo-1506905925346-21bda4d32df4",
@@ -22,6 +24,37 @@ const Index = () => {
   const [savedCount, setSavedCount] = useState(0);
   const [deletedCount, setDeletedCount] = useState(0);
   const [hasStarted, setHasStarted] = useState(false);
+  const [isLoadingPhotos, setIsLoadingPhotos] = useState(false);
+
+  const loadDevicePhotos = async () => {
+    try {
+      setIsLoadingPhotos(true);
+      
+      // Request multiple photos from gallery
+      const images = await CapCamera.pickImages({
+        quality: 90,
+        limit: 50, // Allow selecting up to 50 photos
+      });
+      
+      if (images.photos && images.photos.length > 0) {
+        const photoUrls = images.photos.map(photo => photo.webPath || '');
+        setPhotos(photoUrls.filter(url => url !== ''));
+        setCurrentIndex(0);
+        setSavedCount(0);
+        setDeletedCount(0);
+        setHasStarted(true);
+        
+        toast.success(`Loaded ${images.photos.length} photos from your device!`, {
+          icon: <ImagePlus className="w-4 h-4" />,
+        });
+      }
+    } catch (error) {
+      console.error('Error loading photos:', error);
+      toast.error("Could not access photos. Please allow photo permissions.");
+    } finally {
+      setIsLoadingPhotos(false);
+    }
+  };
 
   const handleSwipe = (direction: "left" | "right") => {
     if (direction === "right") {
@@ -95,13 +128,26 @@ const Index = () => {
               </div>
             </div>
 
-            <Button 
-              onClick={handleStart}
-              size="lg"
-              className="w-full h-14 text-lg rounded-full shadow-lg hover:shadow-xl transition-all"
-            >
-              Start Decluttering
-            </Button>
+            <div className="flex flex-col gap-3">
+              <Button 
+                onClick={loadDevicePhotos}
+                size="lg"
+                disabled={isLoadingPhotos}
+                className="w-full h-14 text-lg rounded-full shadow-lg hover:shadow-xl transition-all"
+              >
+                <ImagePlus className="w-5 h-5 mr-2" />
+                {isLoadingPhotos ? "Loading Photos..." : "Load My Photos"}
+              </Button>
+              
+              <Button 
+                onClick={handleStart}
+                size="lg"
+                variant="outline"
+                className="w-full h-14 text-lg rounded-full shadow-lg hover:shadow-xl transition-all"
+              >
+                Use Demo Photos
+              </Button>
+            </div>
           </div>
         </div>
       </PlatformCheck>
@@ -143,8 +189,8 @@ const Index = () => {
             <SwipeCard
               key={currentIndex}
               imageUrl={photos[currentIndex]}
-              imageName={`photo-${currentIndex + 1}.jpg`}
-              imagePath={photos[currentIndex]}
+              imageName={`Photo ${currentIndex + 1}`}
+              imagePath={photos[currentIndex].includes('unsplash') ? 'Demo Photo' : 'Device Photo'}
               onSwipe={handleSwipe}
             />
           ) : (
@@ -175,9 +221,22 @@ const Index = () => {
                     setSavedCount(0);
                     setDeletedCount(0);
                   }}
-                  className="w-full h-12 rounded-full"
+                  className="w-full h-12 rounded-full mb-3"
                 >
                   Review Again
+                </Button>
+                <Button
+                  onClick={() => {
+                    setHasStarted(false);
+                    setPhotos(DEMO_PHOTOS);
+                    setCurrentIndex(0);
+                    setSavedCount(0);
+                    setDeletedCount(0);
+                  }}
+                  variant="outline"
+                  className="w-full h-12 rounded-full"
+                >
+                  Load New Photos
                 </Button>
               </div>
             </div>

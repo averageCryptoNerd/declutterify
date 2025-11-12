@@ -91,19 +91,19 @@ export const SwipeCard = ({ imageUrl, imageName, imagePath, onSwipe }: SwipeCard
           
             {showKeep && (
               <div 
-                className="absolute top-8 right-8 border-4 border-success rounded-2xl px-6 py-3 rotate-12"
+                className="absolute top-12 right-8 border-[6px] border-success rounded-3xl px-8 py-4 rotate-12 shadow-2xl bg-card/20 backdrop-blur-sm"
                 style={{ opacity: Math.min(opacity, 1) }}
               >
-                <span className="text-success text-4xl font-bold">KEEP</span>
+                <span className="text-success text-5xl font-black tracking-wider">KEEP</span>
               </div>
             )}
           
             {showDelete && (
               <div 
-                className="absolute top-8 left-8 border-4 border-destructive rounded-2xl px-6 py-3 -rotate-12"
+                className="absolute top-12 left-8 border-[6px] border-destructive rounded-3xl px-8 py-4 -rotate-12 shadow-2xl bg-card/20 backdrop-blur-sm"
                 style={{ opacity: Math.min(opacity, 1) }}
               >
-                <span className="text-destructive text-4xl font-bold">DELETE</span>
+                <span className="text-destructive text-5xl font-black tracking-wider">DELETE</span>
               </div>
             )}
           </div>
@@ -111,10 +111,10 @@ export const SwipeCard = ({ imageUrl, imageName, imagePath, onSwipe }: SwipeCard
       </div>
 
       {(imageName || imagePath) && (
-        <div className="absolute bottom-24 left-0 right-0 px-6 z-10 pointer-events-none">
-          <div className="bg-card/90 backdrop-blur-sm rounded-2xl p-4 shadow-lg">
+        <div className="absolute bottom-32 left-0 right-0 px-6 z-10 pointer-events-none">
+          <div className="bg-card/95 backdrop-blur-md rounded-2xl p-5 shadow-xl border border-border/50">
             {imageName && (
-              <div className="text-card-foreground font-semibold truncate">
+              <div className="text-card-foreground font-semibold truncate text-base">
                 {imageName}
               </div>
             )}
@@ -127,18 +127,20 @@ export const SwipeCard = ({ imageUrl, imageName, imagePath, onSwipe }: SwipeCard
         </div>
       )}
 
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-6 z-10">
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-8 z-10">
         <button
           onClick={() => handleButtonClick("left")}
-          className="w-16 h-16 rounded-full bg-card shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-transform border-2 border-destructive/20"
+          className="w-20 h-20 rounded-full bg-card shadow-[0_10px_40px_-10px_rgba(239,68,68,0.4)] flex items-center justify-center hover:scale-110 active:scale-95 transition-all border-4 border-destructive/30 hover:border-destructive/50"
+          aria-label="Delete photo"
         >
-          <X className="w-8 h-8 text-destructive" />
+          <X className="w-10 h-10 text-destructive" strokeWidth={3} />
         </button>
         <button
           onClick={() => handleButtonClick("right")}
-          className="w-16 h-16 rounded-full bg-card shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-transform border-2 border-success/20"
+          className="w-20 h-20 rounded-full bg-card shadow-[0_10px_40px_-10px_rgba(34,197,94,0.4)] flex items-center justify-center hover:scale-110 active:scale-95 transition-all border-4 border-success/30 hover:border-success/50"
+          aria-label="Keep photo"
         >
-          <Heart className="w-8 h-8 text-success fill-success" />
+          <Heart className="w-10 h-10 text-success fill-success" strokeWidth={3} />
         </button>
       </div>
     </div>
